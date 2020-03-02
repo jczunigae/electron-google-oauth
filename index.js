@@ -22,14 +22,32 @@ function getAuthenticationUrl(scopes, clientId, clientSecret, redirectUri = 'urn
 	return url;
 }
 
-function authorizeApp(url, browserWindowParams) {
+function authorizeApp(url, browserWindowParams, httpAgent, pageTitleSuccess, forceLogin) {
 	return new Promise((resolve, reject) => {
 		const win = new BrowserWindow(browserWindowParams || {'use-content-size': true});
-
-		win.loadURL(url);
+		if(forceLogin){
+			console.log('Force login')
+			win.webContents.session.clearStorageData(['cookies'], function (data) {
+				console.log(data);
+			})
+		}
+		win.loadURL(url, {userAgent: httpAgent});
 
 		win.on('closed', () => {
 			reject(new Error('User closed the window'));
+		});
+
+		win.webContents.on('did-navigate', (_event, newUrl) => {
+			console.dir(newUrl);
+			const parsed = _url.parse(newUrl, true);
+			if (parsed.query.error) {
+				reject(new Error(parsed.query.error_description));
+				win.close();
+			}
+			else if (parsed.query.code) {
+				resolve(parsed.query.code);
+				win.close();
+			}
 		});
 
 		win.on('page-title-updated', () => {
@@ -39,7 +57,7 @@ function authorizeApp(url, browserWindowParams) {
 					reject(new Error(title.split(/[ =]/)[2]));
 					win.removeAllListeners('closed');
 					win.close();
-				} else if (title.startsWith('Success')) {
+				} else if (title.startsWith(pageTitleSuccess)) {
 					resolve(title.split(/[ =]/)[2]);
 					win.removeAllListeners('closed');
 					win.close();
@@ -49,10 +67,10 @@ function authorizeApp(url, browserWindowParams) {
 	});
 }
 
-module.exports = function electronGoogleOauth(browserWindowParams, httpAgent) {
+module.exports = function electronGoogleOauth(browserWindowParams, httpAgent, pageTitleSuccess, forceLogin) {
 	function getAuthorizationCode(scopes, clientId, clientSecret, redirectUri = 'urn:ietf:wg:oauth:2.0:oob') {
 		const url = getAuthenticationUrl(scopes, clientId, clientSecret, redirectUri);
-		return authorizeApp(url, browserWindowParams);
+		return authorizeApp(url, browserWindowParams, httpAgent, pageTitleSuccess, forceLogin);
 	}
 
 	const getAccessToken = co.wrap(function * (scopes, clientId, clientSecret, redirectUri = 'urn:ietf:wg:oauth:2.0:oob') {
@@ -63,10 +81,11 @@ module.exports = function electronGoogleOauth(browserWindowParams, httpAgent) {
 			client_id: clientId,
 			client_secret: clientSecret,
 			grant_type: 'authorization_code',
-			redirect_uri: redirectUri
+			redirect_uri: redirectUri,
+			response_type : 'code'
 		});
 
-		const res = yield fetch('https://accounts.google.com/o/oauth2/token', {
+		const res = yield fetch('https://www.googleapis.com/oauth2/v4/token', {
 			method: 'post',
 			headers: {
 				'Accept': 'application/json',
