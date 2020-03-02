@@ -1,5 +1,5 @@
 {
-  "name": "@jczunigae/electron-google-oauth",
+  "name": "@czuniga/electron-google-oauth",
   "description": "Google api access token in electron",
   "keywords": [
     "google api",
@@ -8,8 +8,11 @@
     "oauth",
     "oauth2"
   ],
-  "repository": "jczunigae/electron-google-oauth",
-  "version": "2.0.1",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jczunigae/electron-google-oauth.git"
+  },
+  "version": "2.0.2",
   "bin": {
     "ego": "bin.js"
   },
@@ -23,7 +26,7 @@
     "bin.js",
     "index.js"
   ],
-  "author": "parro-it",
+  "author": "czuniga",
   "scripts": {
     "test": "xo",
     "start": "electron bin.js --scopes https://www.google.com/m8/feeds --clientId $CLIENTID --clientSecret $CLIENTSECRET"
@@ -32,5 +35,10 @@
     "electron-prebuilt": "^1.3.3",
     "xo": "^0.16.0"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jczunigae/electron-google-oauth/issues"
+  },
+  "homepage": "https://github.com/jczunigae/electron-google-oauth#readme",
+  "main": "index.js"
 }
