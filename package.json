@@ -1,5 +1,5 @@
 {
-  "name": "jczunigae/electron-google-oauth",
+  "name": "@jczunigae/electron-google-oauth",
   "description": "Google api access token in electron",
   "keywords": [
     "google api",
